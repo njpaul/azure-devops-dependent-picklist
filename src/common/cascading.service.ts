@@ -13,6 +13,7 @@ import uniq from 'lodash/uniq';
 import {
   CascadeConfiguration,
   CascadeMap,
+  FieldHint,
   FieldOptions,
   FieldOptionsFlags,
   ICascade,
@@ -41,7 +42,9 @@ class CascadingFieldsService {
     Object.entries(cascadeConfiguration).map(([fieldName, fieldValues]) => {
       let alters: string[] = [];
       Object.values(fieldValues).map(cascadeDefinitions => {
-        Object.keys(cascadeDefinitions).map(field => alters.push(field));
+        Object.keys(cascadeDefinitions)
+          .filter(field => field !== 'hint')
+          .map(field => alters.push(field));
       });
 
       alters = uniq(alters);
@@ -166,7 +169,8 @@ class CascadeValidationService {
     // Check fields on the lower level of config
     Object.values(cascades).map(fieldValues => {
       Object.values(fieldValues).map(innerFields => {
-        const invalidFields = Object.keys(innerFields).filter(field => !fieldList.includes(field));
+        const invalidFields = Object.keys(innerFields)
+          .filter(field => field !== 'hint' && !fieldList.includes(field));
         invalidFieldsTotal = [...invalidFieldsTotal, ...invalidFields];
       });
     });

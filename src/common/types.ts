@@ -1,5 +1,15 @@
 export type FieldName = string;
-export type FieldOptions = Record<FieldName, string[] | FieldOptionsFlags>;
+
+export const FIELD_HINT_SOURCES = ['Area Path'] as const;
+export type FieldHintSource = typeof FIELD_HINT_SOURCES[number];
+export type FieldHint = {
+  when: FieldHintSource,
+  is: string,
+};
+
+export type FieldOptions = {
+  hint?: FieldHint
+} & Record<FieldName, string[] | FieldOptionsFlags>;
 export type CascadeConfiguration = Record<FieldName, Record<FieldName, FieldOptions>>;
 export type CascadeMap = Record<FieldName, ICascade>;
 
