@@ -56,6 +56,7 @@ class CascadingFieldsService {
 
       cascadeMap[fieldName] = cascade;
     });
+    console.log(`cascadeMap: ${JSON.stringify(cascadeMap)}`)
     return cascadeMap;
   }
 
@@ -63,7 +64,8 @@ class CascadingFieldsService {
     if (!this.cascadeMap[fieldReferenceName].cascades.hasOwnProperty(fieldValue)) {
       return [];
     }
-    return Object.keys(this.cascadeMap[fieldReferenceName].cascades[fieldValue]);
+    return Object.keys(this.cascadeMap[fieldReferenceName].cascades[fieldValue])
+      .filter(field => field !== 'hint');
   }
 
   private async validateFilterOrClean(fieldReferenceName: string): Promise<boolean> {
@@ -129,12 +131,25 @@ class CascadingFieldsService {
     const changedFieldValue = (await this.workItemService.getFieldValue(
       changedFieldReferenceName
     )) as string;
+
     if (!this.cascadeMap.hasOwnProperty(changedFieldReferenceName)) {
       return;
     }
 
+    if (!changedFieldValue) {
+      const areaPath = await this.workItemService.getFieldValue('System.AreaPath') as string
+      for (const [option, cascade] of Object.entries(this.cascadeMap[changedFieldReferenceName].cascades)) {
+        if ((cascade.hint?.when === 'Area Path') && areaPath.startsWith(cascade.hint?.is)) {
+          await this.workItemService.setFieldValue(changedFieldReferenceName, option);
+        }
+      }
+    }
+
     const affectedFields = this.getAffectedFields(changedFieldReferenceName, changedFieldValue);
     const fieldValues = await this.prepareCascadeOptions(affectedFields);
+    console.log(`changed ref ${changedFieldReferenceName}`)
+    console.log(`affected ${JSON.stringify(affectedFields)}`)
+    console.log(`field values ${JSON.stringify(fieldValues)}`)
 
     Object.entries(fieldValues).map(async ([fieldName, fieldValues]) => {
       await (this.workItemService as any).filterAllowedFieldValues(fieldName, fieldValues);
