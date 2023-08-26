@@ -70,13 +70,11 @@ class CascadingFieldsService {
       .filter(field => !RESERVED_FIELD_NAMES.includes(field));
   }
 
-  private async validateFilterOrClean(fieldReferenceName: string): Promise<boolean> {
+  private async validateFilter(fieldReferenceName: string): Promise<boolean> {
     const allowedValues: string[] = await (this
       .workItemService as any).getFilteredAllowedFieldValues(fieldReferenceName);
     const fieldValue = (await this.workItemService.getFieldValue(fieldReferenceName)) as string;
-    if (!allowedValues.includes(fieldValue)) {
-      return this.workItemService.setFieldValue(fieldReferenceName, '');
-    }
+    return !fieldValue || allowedValues.includes(fieldValue)
   }
 
   public async resetAllCascades(): Promise<void[]> {
@@ -141,6 +139,8 @@ class CascadingFieldsService {
       changedFieldReferenceName
     )) as string;
 
+    await this.workItemService.clearError();
+
     if (!this.cascadeMap.hasOwnProperty(changedFieldReferenceName)) {
       return;
     }
@@ -149,10 +149,14 @@ class CascadingFieldsService {
     const affectedFields = this.getAffectedFields(changedFieldReferenceName, changedFieldValue);
     const fieldValues = await this.prepareCascadeOptions(affectedFields);
 
-    Object.entries(fieldValues).map(async ([fieldName, fieldValues]) => {
-      await (this.workItemService as any).filterAllowedFieldValues(fieldName, fieldValues);
-      await this.validateFilterOrClean(fieldName);
-    });
+    for (const [fieldReferenceName, values] of Object.entries(fieldValues)) {
+      await (this.workItemService as any).filterAllowedFieldValues(fieldReferenceName, values);
+      const isValid = await this.validateFilter(fieldReferenceName);
+      if (!isValid) {
+        await this.workItemService.setError(`Field '${fieldReferenceName}' value is invalid`);
+        break;
+      }
+    }
   }
 }
 
