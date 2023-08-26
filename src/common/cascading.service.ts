@@ -63,11 +63,19 @@ class CascadingFieldsService {
   }
 
   private getAffectedFields(fieldReferenceName: string, fieldValue: string): string[] {
-    if (!this.cascadeMap[fieldReferenceName].cascades.hasOwnProperty(fieldValue)) {
-      return [];
+    if (!fieldValue) {
+      // All dependent field references are affected if the parent has no value
+      return uniq(Object.values(this.cascadeMap[fieldReferenceName].cascades)
+        .flatMap(cascade => Object.keys(cascade)))
+      .filter(k => !RESERVED_FIELD_NAMES.includes(k))
     }
-    return Object.keys(this.cascadeMap[fieldReferenceName].cascades[fieldValue])
+
+    if (this.cascadeMap[fieldReferenceName].cascades.hasOwnProperty(fieldValue)) {
+     return Object.keys(this.cascadeMap[fieldReferenceName].cascades[fieldValue])
       .filter(field => !RESERVED_FIELD_NAMES.includes(field));
+    }
+
+    return [];
   }
 
   private async validateFilter(fieldReferenceName: string): Promise<boolean> {
@@ -103,8 +111,9 @@ class CascadingFieldsService {
               const fieldValue = (await this.workItemService.getFieldValue(alterField)) as string;
               let cascadeOptions: string[];
               if (
-                typeof cascade.cascades[fieldValue][field] === 'string' &&
-                cascade.cascades[fieldValue][field] === FieldOptionsFlags.All
+                !fieldValue ||
+                ( typeof cascade.cascades[fieldValue]?.[field] === 'string' &&
+                  cascade.cascades[fieldValue]?.[field] === FieldOptionsFlags.All )
               ) {
                 cascadeOptions = (await this.workItemService.getAllowedFieldValues(field)).map(
                   value => value.toString()
@@ -112,6 +121,7 @@ class CascadingFieldsService {
               } else {
                 cascadeOptions = cascade.cascades[fieldValue][field] as string[];
               }
+
               if (fieldValues.hasOwnProperty(field)) {
                 fieldValues[field] = intersection(fieldValues[field], cascadeOptions);
               } else {
@@ -122,6 +132,7 @@ class CascadingFieldsService {
         })
       )
     );
+
     return fieldValues;
   }
 
