@@ -1,5 +1,5 @@
 import { ConfigurationStorage, ConfigurationType } from './storage.service';
-import { IManifest } from './types';
+import { CascadeConfiguration, FIELD_HINT_SOURCES, ICascade, IManifest } from './types';
 import { CascadeValidationService } from './cascading.service';
 
 type Validator = (manifest: IManifest) => Promise<null | IManifestValidationError>;
@@ -114,6 +114,39 @@ class ManifestValidationService {
         description: '"cascades" should be an object, not an array',
       };
     }
+
+    return this.checkCascadeHintsType(manifest.cascades);
+  }
+
+  private async checkCascadeHintsType(cascades: CascadeConfiguration): Promise<null | IManifestValidationError> {
+    for (const fieldValues of Object.values(cascades)) {
+      for (const fieldOptions of Object.values(fieldValues)) {
+        const { hint } = fieldOptions;
+        if (typeof hint !== 'undefined') {
+          if (typeof hint !== 'object') {
+            return {
+              code: ValidationErrorCode.InvalidCascadeType,
+              description: '"hint" should be an object',
+            };
+          }
+
+          if (!FIELD_HINT_SOURCES.includes(hint.when)) {
+            return {
+              code: ValidationErrorCode.InvalidCascadeType,
+              description: `"hint.when" (${hint.when}) is not in ${JSON.stringify(FIELD_HINT_SOURCES)}})`,
+            };
+          }
+
+          if (typeof hint.is !== 'string') {
+            return {
+              code: ValidationErrorCode.InvalidCascadeType,
+              description: `"hint.is" must be a string, not ${typeof hint.is}`,
+            };
+          }
+        }
+      }
+    }
+
     return null;
   }
 

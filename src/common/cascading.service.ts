@@ -16,12 +16,15 @@ import {
   FieldOptions,
   FieldOptionsFlags,
   ICascade,
+  RESERVED_FIELD_NAMES,
 } from './types';
+import { HintService } from './hints.service';
 
 type InvalidField = string;
 
 class CascadingFieldsService {
   private workItemService: IWorkItemFormService;
+  private hintService: HintService;
   private cascadeMap: CascadeMap;
 
   public constructor(
@@ -29,6 +32,7 @@ class CascadingFieldsService {
     cascadeConfiguration: CascadeConfiguration
   ) {
     this.workItemService = workItemService;
+    this.hintService = new HintService(workItemService);
     this.cascadeMap = this.createCascadingMap(cascadeConfiguration);
   }
 
@@ -41,7 +45,9 @@ class CascadingFieldsService {
     Object.entries(cascadeConfiguration).map(([fieldName, fieldValues]) => {
       let alters: string[] = [];
       Object.values(fieldValues).map(cascadeDefinitions => {
-        Object.keys(cascadeDefinitions).map(field => alters.push(field));
+        Object.keys(cascadeDefinitions)
+          .filter(field => !RESERVED_FIELD_NAMES.includes(field))
+          .map(field => alters.push(field));
       });
 
       alters = uniq(alters);
@@ -60,7 +66,8 @@ class CascadingFieldsService {
     if (!this.cascadeMap[fieldReferenceName].cascades.hasOwnProperty(fieldValue)) {
       return [];
     }
-    return Object.keys(this.cascadeMap[fieldReferenceName].cascades[fieldValue]);
+    return Object.keys(this.cascadeMap[fieldReferenceName].cascades[fieldValue])
+      .filter(field => !RESERVED_FIELD_NAMES.includes(field));
   }
 
   private async validateFilterOrClean(fieldReferenceName: string): Promise<boolean> {
@@ -73,6 +80,10 @@ class CascadingFieldsService {
   }
 
   public async resetAllCascades(): Promise<void[]> {
+    // Re-enable the hint service so that we provide hints the next time a
+    // work item form is enabled
+    this.hintService.setEnabled(true)
+
     const fields = flatten(Object.values(this.cascadeMap).map(value => value.alters));
     const fieldsToReset = new Set<string>(fields);
     return Promise.all(
@@ -116,20 +127,25 @@ class CascadingFieldsService {
     return fieldValues;
   }
 
-  public async cascadeAll(): Promise<void[][]> {
-    return Promise.all(
+  public async cascadeAll(): Promise<void> {
+    await Promise.all(
       Object.keys(this.cascadeMap).map(async field => this.performCascading(field))
     );
+
+    // Only hint the first time we're cascading on the form
+    this.hintService.setEnabled(false)
   }
 
-  public async performCascading(changedFieldReferenceName: string): Promise<void[]> {
+  public async performCascading(changedFieldReferenceName: string): Promise<void> {
     const changedFieldValue = (await this.workItemService.getFieldValue(
       changedFieldReferenceName
     )) as string;
+
     if (!this.cascadeMap.hasOwnProperty(changedFieldReferenceName)) {
       return;
     }
 
+    await this.hintService.hintFieldValue(this.cascadeMap, changedFieldReferenceName, changedFieldValue);
     const affectedFields = this.getAffectedFields(changedFieldReferenceName, changedFieldValue);
     const fieldValues = await this.prepareCascadeOptions(affectedFields);
 
@@ -166,7 +182,8 @@ class CascadeValidationService {
     // Check fields on the lower level of config
     Object.values(cascades).map(fieldValues => {
       Object.values(fieldValues).map(innerFields => {
-        const invalidFields = Object.keys(innerFields).filter(field => !fieldList.includes(field));
+        const invalidFields = Object.keys(innerFields)
+          .filter(field => !RESERVED_FIELD_NAMES.includes(field) && !fieldList.includes(field));
         invalidFieldsTotal = [...invalidFieldsTotal, ...invalidFields];
       });
     });
