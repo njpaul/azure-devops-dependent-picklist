@@ -20,6 +20,10 @@ Once both picklists have been created and configured, you can configure what chi
 
 ![image](./images/settings-hub-1.png)
 
+You can also configure hints to pre-select the parent picklist value.
+The parent picklist value will be set based on the provided hint, if any, if it has no value when the form is shown.
+The only hint currently supported is `"Area Path"`.
+
 Config example:
 ```json
 {
@@ -27,6 +31,10 @@ Config example:
   "cascades": {
       "Custom.MajorRelease": {
           "Release Blue": {
+              "hint": {
+                  "when": "Area Path",
+                  "is": "My Project\\My Team"
+              },
               "Custom.MinorRelease": [
                   "Blue.1",
                   "Blue.2",
@@ -44,6 +52,8 @@ Config example:
   }
 }
 ```
+
+In the above example, if the Area Path of the work item is `"My Project\My Team"` or any child of that Area Path, the `Custom.MajorRelease` field will be preset to `"Release Blue"`.
 
 #### Tips
 
