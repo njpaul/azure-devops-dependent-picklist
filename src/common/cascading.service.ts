@@ -17,6 +17,7 @@ import {
   FieldOptions,
   FieldOptionsFlags,
   ICascade,
+  RESERVED_FIELD_NAMES,
 } from './types';
 import { HintService } from './hints.service';
 
@@ -46,7 +47,7 @@ class CascadingFieldsService {
       let alters: string[] = [];
       Object.values(fieldValues).map(cascadeDefinitions => {
         Object.keys(cascadeDefinitions)
-          .filter(field => field !== 'hint')
+          .filter(field => !RESERVED_FIELD_NAMES.includes(field))
           .map(field => alters.push(field));
       });
 
@@ -67,7 +68,7 @@ class CascadingFieldsService {
       return [];
     }
     return Object.keys(this.cascadeMap[fieldReferenceName].cascades[fieldValue])
-      .filter(field => field !== 'hint');
+      .filter(field => !RESERVED_FIELD_NAMES.includes(field));
   }
 
   private async validateFilterOrClean(fieldReferenceName: string): Promise<boolean> {
@@ -183,7 +184,7 @@ class CascadeValidationService {
     Object.values(cascades).map(fieldValues => {
       Object.values(fieldValues).map(innerFields => {
         const invalidFields = Object.keys(innerFields)
-          .filter(field => field !== 'hint' && !fieldList.includes(field));
+          .filter(field => !RESERVED_FIELD_NAMES.includes(field) && !fieldList.includes(field));
         invalidFieldsTotal = [...invalidFieldsTotal, ...invalidFields];
       });
     });

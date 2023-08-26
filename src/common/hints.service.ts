@@ -1,5 +1,5 @@
 import { IWorkItemFormService } from "azure-devops-extension-api/WorkItemTracking/WorkItemTrackingServices";
-import { CascadeMap } from "./types";
+import { CascadeMap, RESERVED_FIELD_NAMES } from "./types";
 
 export class HintService {
   private workItemService: IWorkItemFormService;
@@ -26,7 +26,7 @@ export class HintService {
         // Don't hint the parent field if any of the dependent fields have a
         // value, so that we don't clear out the existing value of the
         // dependent.
-        const dependentFieldRefs = Object.keys(cascade).filter(k => k !== 'hint');
+        const dependentFieldRefs = Object.keys(cascade).filter(k => !RESERVED_FIELD_NAMES.includes(k));
         const dependentFieldValues = await this.workItemService.getFieldValues(dependentFieldRefs);
         const dependentHasValue = Object.values(dependentFieldValues).some(v => !!v)
 

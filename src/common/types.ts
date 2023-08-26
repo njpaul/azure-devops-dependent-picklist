@@ -1,5 +1,9 @@
 export type FieldName = string;
 
+// A list of field names that are reserved for us. No valid field reference can
+// match these names.
+export const RESERVED_FIELD_NAMES: FieldName[] = ['hint']
+
 export const FIELD_HINT_SOURCES = ['Area Path'] as const;
 export type FieldHintSource = typeof FIELD_HINT_SOURCES[number];
 export type FieldHint = {
