@@ -18,21 +18,22 @@ import {
   FieldOptionsFlags,
   ICascade,
 } from './types';
+import { HintService } from './hints.service';
 
 type InvalidField = string;
 
 class CascadingFieldsService {
   private workItemService: IWorkItemFormService;
+  private hintService: HintService;
   private cascadeMap: CascadeMap;
-  private isFormLoaded: boolean;
 
   public constructor(
     workItemService: IWorkItemFormService,
     cascadeConfiguration: CascadeConfiguration
   ) {
     this.workItemService = workItemService;
+    this.hintService = new HintService(workItemService);
     this.cascadeMap = this.createCascadingMap(cascadeConfiguration);
-    this.isFormLoaded = false;
   }
 
   private createCascadingMap(cascadeConfiguration: CascadeConfiguration): CascadeMap {
@@ -79,7 +80,10 @@ class CascadingFieldsService {
   }
 
   public async resetAllCascades(): Promise<void[]> {
-    this.isFormLoaded = false
+    // Re-enable the hint service so that we provide hints the next time a
+    // work item form is enabled
+    this.hintService.setEnabled(true)
+
     const fields = flatten(Object.values(this.cascadeMap).map(value => value.alters));
     const fieldsToReset = new Set<string>(fields);
     return Promise.all(
@@ -127,7 +131,9 @@ class CascadingFieldsService {
     await Promise.all(
       Object.keys(this.cascadeMap).map(async field => this.performCascading(field))
     );
-    this.isFormLoaded = true;
+
+    // Only hint the first time we're cascading on the form
+    this.hintService.setEnabled(false)
   }
 
   public async performCascading(changedFieldReferenceName: string): Promise<void> {
@@ -139,22 +145,7 @@ class CascadingFieldsService {
       return;
     }
 
-    if (!changedFieldValue && !this.isFormLoaded) {
-      const areaPath = await this.workItemService.getFieldValue('System.AreaPath') as string
-      for (const [option, cascade] of Object.entries(this.cascadeMap[changedFieldReferenceName].cascades)) {
-
-        // Don't hint the parent field if any of the dependent fields have a value, so that we
-        // don't clear out the existing value of the dependent.
-        const dependentFieldRefs = Object.keys(cascade).filter(k => k !== 'hint');
-        const dependentFieldValues = await this.workItemService.getFieldValues(dependentFieldRefs);
-        const dependentHasValue = Object.values(dependentFieldValues).some(v => !!v)
-
-        if (!dependentHasValue && (cascade.hint?.when === 'Area Path') && areaPath.startsWith(cascade.hint?.is)) {
-          await this.workItemService.setFieldValue(changedFieldReferenceName, option);
-        }
-      }
-    }
-
+    await this.hintService.hintFieldValue(this.cascadeMap, changedFieldReferenceName, changedFieldValue);
     const affectedFields = this.getAffectedFields(changedFieldReferenceName, changedFieldValue);
     const fieldValues = await this.prepareCascadeOptions(affectedFields);
 
