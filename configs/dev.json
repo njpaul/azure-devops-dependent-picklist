@@ -1,7 +1,6 @@
 {
-    "id": "cascading-picklists-extension-dev",
-    "name": "Cascading Lists (dev)",
-    "publisher": "ms-devlabs",
+    "id": "dependent-picklists-dev",
+    "name": "Dependent Lists (dev)",
     "public": false,
     "baseUri": "https://localhost:44300"
-}   
+}
