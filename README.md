@@ -22,17 +22,17 @@ This extension uses the `ms.vss-work-web.work-item-form` contribution point that
 Dependent picklists are made up of two seperate fields: a parent field and a dependent (child) field.
 When a value is selected from the parent picklist, the dependent picklist will show only the values associated with the parent value.
 
-![image](./images/picklist-demo.gif)
+![image](images/picklist-demo.gif)
 
 ### Create a picklist
 
 First, create a picklist of parent values.
 
-![image](./images/picklist-parent.png)
+![image](images/picklist-parent.png)
 
 Second, create a dependent picklist containing **all** possible values, regardless of parent value.
 
-![image](./images/picklist-child.png)
+![image](images/picklist-child.png)
 
 Finally, configure how those values get associated with the parent values in the extension configuration.
 
