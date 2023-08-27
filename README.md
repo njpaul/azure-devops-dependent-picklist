@@ -1,24 +1,47 @@
-# Cascading Picklists Extension
+# Dependent Picklists Extension for Azure DevOps
 
-This extension can be found in the [Azure DevOps Marketplace](https://marketplace.visualstudio.com/items?itemName=ms-devlabs.cascading-picklists-extension 'Download Cascading Lists extension').
+This extension can be found in the [Azure DevOps Marketplace](https://marketplace.visualstudio.com/items?itemName=njpaul.dependent-picklists 'Download Dependent Lists extension').
 
-## Cascading Picklists
+This extension is based on the popular [Cascading Lists](https://marketplace.visualstudio.com/items?itemName=ms-devlabs.cascading-picklists-extension) extension.
 
-This extension uses the `ms.vss-work-web.work-item-form` contribution point that enables you to build a cascading picklist on the work item form. Cascading picklists are made up of two seperate fields. The parent field and a child field. The parent picklist will contain a list of values, that when a value is selected, will display the values in the child list.
+## Why use this extension?
+This extension adds behavior to the original extension:
+- This can now be installed on Azure DevOps Server (on-prem) deployments
+- Hints can be provided to automatically populate the parent picklist.
+  This can make it easier to select items from the dependent picklist.
+- Dependent picklist items that aren't valid for the parent selection now cause a form error.
+  Previously the dependent selection was cleared with no indication as to why.
+- Clearing the parent picklist value now causes the dependent list to show all possible values.
+  Previously, the only values displayed were the ones associated with the parent value before it was cleared.
 
-![image](./images/picklist-demo.gif)
+When it makes sense to do so, PRs will be submitted back upstream for consideration.
+
+## Dependent Picklists
+
+This extension uses the `ms.vss-work-web.work-item-form` contribution point that enables you to build a dependent picklist on the work item form.
+Dependent picklists are made up of two seperate fields: a parent field and a dependent (child) field.
+When a value is selected from the parent picklist, the dependent picklist will show only the values associated with the parent value.
+
+![image](images/picklist-demo.gif)
 
 ### Create a picklist
 
-First, create a picklist of parent values. Second, create a picklist of child values. This child picklist will contain **all** possible values. We will configure how those values get displayed in the extension configuration.
+First, create a picklist of parent values.
 
-![image](./images/picklist-child.png)
+![image](images/picklist-parent.png)
+
+Second, create a dependent picklist containing **all** possible values, regardless of parent value.
+
+![image](images/picklist-child.png)
+
+Finally, configure how those values get associated with the parent values in the extension configuration.
+
 
 ### Configure
 
-Once both picklists have been created and configured, you can configure what child picklist values will be displayed. You do this by going to the "Cascading Lists" Hub in project settings. From here, configure the value for the parent picklist, so that when selected, the child values will be displayed.
-
-![image](./images/settings-hub-1.png)
+Once both picklists have been created, you can configure which dependent picklist values will be associated with the parent values.
+You do this by going to the "Dependent Lists" Hub in the project settings.
+From here, configure the values for the parent picklist so that when selected, the dependent values will be displayed.
 
 You can also configure hints to pre-select the parent picklist value.
 The parent picklist value will be set based on the provided hint, if any, if it has no value when the form is shown.
@@ -27,39 +50,50 @@ The only hint currently supported is `"Area Path"`.
 Config example:
 ```json
 {
-  "version": 1,
+  "version": "1",
   "cascades": {
-      "Custom.MajorRelease": {
-          "Release Blue": {
-              "hint": {
-                  "when": "Area Path",
-                  "is": "My Project\\My Team"
-              },
-              "Custom.MinorRelease": [
-                  "Blue.1",
-                  "Blue.2",
-                  "Blue.3"
-              ]
-          },
-          "Release Red": {
-              "Custom.MinorRelease": [
-                  "Red.A",
-                  "Red.B",
-                  "Red.C"
-              ]
-          }
+    "Custom.Species": {
+      "Cat": {
+        "hint": {
+          "when": "Area Path",
+          "is": "My Project\\Cats"
+        },
+        "Custom.Breed": [
+          "Siamese",
+          "Sphynx",
+          "Maine Coon"
+        ]
+      },
+      "Dog": {
+        "hint": {
+          "when": "Area Path",
+          "is": "My Project\\Dogs"
+        },
+        "Custom.Breed": [
+          "Irish Wolfhound",
+          "Siberian Husky",
+          "German Shepherd"
+        ]
       }
+    }
   }
 }
 ```
 
-In the above example, if the Area Path of the work item is `"My Project\My Team"` or any child of that Area Path, the `Custom.MajorRelease` field will be preset to `"Release Blue"`.
+In the above example, if the Area Path of the work item is `"My Project\Cats"` or **any child of that Area Path**, the `Custom.Species` field will be set to `"Cat"`.
 
 #### Tips
 
-1. You must know the refname of the custom picklist fields. You can use [List Fields REST API](https://docs.microsoft.com/en-us/rest/api/azure/devops/wit/fields/list?view=azure-devops-rest-5.0) if you need help finding the value.
+1. You must know the refname of the custom picklist fields.
+   You can use [List Fields REST API](https://docs.microsoft.com/en-us/rest/api/azure/devops/wit/fields/list?view=azure-devops-rest-5.0) if you need help finding the value.
 
-2. The values setup in the picklist and the values in the configuration must be an exact match. There is no validation to check or correct spelling mistakes in the values.
+2. The values setup in the picklist and the values in the configuration must be an exact match.
+   There is no validation to check or correct spelling mistakes in the values.
+
+3. When using hints to populate the parent picklist, you can choose to hide the parent field on the form.
+   This can be a useful technique to simplify the user experience and minimize user error.
+   For example, the parent picklist value could represent a team and the dependent list could contain a list of values applicable to that team.
+   The hint would populate the hidden field such that team members only have to fill in the dependent list value.
 
 ## Prerequisites
 
@@ -107,14 +141,4 @@ Follow the instructions here:
 
 # Contributing
 
-This project welcomes contributions and suggestions. Most contributions require you to agree to a
-Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit https://cla.microsoft.com.
-
-When you submit a pull request, a CLA-bot will automatically determine whether you need to provide
-a CLA and decorate the PR appropriately (e.g., label, comment). Simply follow the instructions
-provided by the bot. You will only need to do this once across all repos using our CLA.
-
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+This project welcomes contributions and suggestions.

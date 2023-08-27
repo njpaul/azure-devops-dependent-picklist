@@ -1,14 +1,20 @@
 {
-  "manifestVersion": 1.0,
-  "id": "cascading-picklists-extension",
-  "publisher": "ms-devlabs",
-  "version": "0.1.16",
-  "name": "Cascading Lists",
-  "description": "Extension allows to define cascading behavior for picklists in work item form.",
+  "manifestVersion": 1,
+  "id": "dependent-picklists",
+  "publisher": "njpaul",
+  "version": "1.0.0",
+  "name": "Dependent Lists",
+  "description": "Allows picklist options to be filtered based on the value of another picklist",
   "categories": [
     "Azure Boards"
   ],
+  "targets": [
+    {
+      "id": "Microsoft.VisualStudio.Services"
+    }
+  ],
   "tags": [
+    "Dependent Picklists",
     "Cascading Picklists"
   ],
   "icons": {
@@ -17,47 +23,41 @@
   },
   "content": {
     "details": {
-      "path": "marketplace/details.md"
+      "path": "README.md"
     },
     "license": {
-      "path": "marketplace/license.md"
+      "path": "LICENSE"
     }
   },
-  "targets": [
-    {
-      "id": "Microsoft.VisualStudio.Services"
-    }
-  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/microsoft/azure-devops-extension-cascading-picklist"
+    "url": "https://github.com/njpaul/azure-devops-dependent-picklist"
   },
   "scopes": [
-    "vso.work",
     "vso.work_write"
   ],
   "contributions": [
     {
-      "id": "cascading-lists-wit-observer",
+      "id": "dependent-lists-wit-observer",
       "type": "ms.vss-work-web.work-item-notifications",
-      "description": "Observer modifies behavior of a work item form to support cascading picklists.",
+      "description": "Observer modifies behavior of a work item form to support dependent picklists.",
       "targets": [
         "ms.vss-work-web.work-item-form"
       ],
       "properties": {
-        "name": "Cascading Lists Observer",
+        "name": "Dependent Lists Observer",
         "uri": "/dist/observer.html"
       }
     },
     {
-      "id": "cascading-lists-config-hub",
+      "id": "dependent-lists-config-hub",
       "type": "ms.vss-web.hub",
-      "description": "Configuration hub for a cascading lists",
+      "description": "Configuration hub for a dependent lists",
       "targets": [
         "ms.vss-web.project-admin-hub-group"
       ],
       "properties": {
-        "name": "Cascading Lists",
+        "name": "Dependent Lists",
         "order": 1,
         "uri": "/dist/confighub.html"
       }
@@ -66,10 +66,6 @@
   "files": [
     {
       "path": "images",
-      "addressable": true
-    },
-    {
-      "path": "marketplace",
       "addressable": true
     },
     {

@@ -45,7 +45,7 @@ const ConfigView: React.FC = () => {
 
   return (
     <ConfigViewContainer>
-      <Header title='Cascading Lists Config' onSaveClick={onSaveButtonClick} status={status} />
+      <Header title='Dependent Lists Config' onSaveClick={onSaveButtonClick} status={status} />
       <EditorContainer>
         <MonacoEditor
           height='800'

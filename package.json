@@ -1,9 +1,9 @@
 {
-  "name": "cascading-picklists-extenstion",
+  "name": "dependent-picklists",
   "version": "1.0.0",
-  "author": "Anton Kovalyov",
-  "license": "",
-  "description": "Extenstion that allows to customize cascading picklists for Azure DevOps.",
+  "author": "Nathan Paul",
+  "license": "MIT",
+  "description": "Allows picklist options to be filtered based on the value of another picklist.",
   "private": true,
   "scripts": {
     "start": "webpack-dev-server --hot --progress --static ./ --port 44300 --https --config webpack.dev.config.js",
